@@ -5,11 +5,11 @@ const inject = ['slots', 'remote', 'timer', 'sessions', 'workspaces', 'uiWorkspa
 function apply(ctx) {
   const mounted = ctx.remote.$mount(SIDEBAR_REMOTE)
   ctx.effect(() => () => { void mounted.then((release) => release()).catch(() => {}) }, 'codex-sidebar: remote')
-  mountCodexSidebar(ctx, async (method) => {
+  mountCodexSidebar(ctx, async (method, ...args) => {
     await mounted
     const remote = ctx.get('remote.codexSidebar') ?? ctx.remote.namespaces?.get('codexSidebar')?.service
     if (!remote) throw new Error('Codex sidebar service is unavailable')
-    const result = await remote[method]()
+    const result = await remote[method](...args)
     if (result?.ok === false) throw new Error(result.error?.message || 'Codex sync failed')
     return result?.value ?? result
   })

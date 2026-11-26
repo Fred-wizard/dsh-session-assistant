@@ -15,7 +15,7 @@ https://github.com/Fred-wizard/dsh-codex-sidebar/releases/latest/download/dsh-co
 也可以通过 GitHub 标签安装。此方式需要 DSH 安装器能在本机调用 Git：
 
 ```sh
-dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.3"
+dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.4"
 ```
 
 已有独立的 Codex 会话导入与侧栏插件时，建议先停用旧入口以避免同时显示两个侧栏。已导入会话仍属于原 DSH 工作区。若要沿用旧导入记录以防重复，可将 `outputDir` 指向兼容旧迁移的数据目录。
@@ -23,7 +23,8 @@ dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.3"
 ## 使用
 
 - 启用或重开 DSH 后自动检查可导入的会话和记忆。悬停在左下角账户栏时，也可点击右侧的刷新图标。手动同步成功后会短暂显示「同步完成」。
-- 点击会话标题打开历史，点击图钉切换 DSH 置顶。最近会话按更新时间排列，跳过置顶、已归档和 Codex 附属会话。
+- 点击会话标题打开历史，点击图钉切换 DSH 置顶。最近会话跳过置顶、已归档和 Codex 附属会话。主会话和附属会话都已导入时，工作区默认只列出主会话；仍可搜索附属会话。
+- 导入轮次在原始 Codex 记录可匹配时显示实际耗时。缺少耗时依据时仅显示完成状态。
 - 在 DSH 中可用 `codex_memory_search` 查找已导入的 Markdown 记忆。
 
 同步从 Codex 单向导入新会话和变化的 Markdown 记忆。已有会话的后续消息各自在原应用保留。目录默认使用 `CODEX_HOME`（若有）或本机 `~/.codex`，需要 Codex 的本地会话索引 `state_5.sqlite` 以及对应 `.jsonl` 或 `.jsonl.zst`。导入文件默认存到 DSH 数据目录下的 `codex-sidebar`。插件在本地处理这些文件。

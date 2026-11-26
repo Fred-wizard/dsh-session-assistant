@@ -67,6 +67,8 @@ const style = `
   @media (prefers-reduced-motion: reduce) {
     .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-icon { animation: none; }
   }
+  button[data-turn-process][data-dsh-codex-timing] > span:first-child { display: none; }
+  button[data-turn-process][data-dsh-codex-timing]::before { content: attr(data-dsh-codex-timing); }
 `
 
 function useAnchors() {
@@ -134,6 +136,73 @@ function dateValue(value) {
   return typeof value === 'number' ? value : Date.parse(value || '') || 0
 }
 
+function importedTurnLabel(ms, zh) {
+  if (ms === null) return zh ? '已完成' : 'Completed'
+  const seconds = Math.floor(ms / 1000)
+  if (!seconds) return zh ? '已完成，不到 1 秒' : 'Completed in <1s'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor(seconds / 60) % 60
+  const remaining = seconds % 60
+  const parts = [
+    hours && (zh ? hours + ' 小时' : hours + 'h'),
+    minutes && (zh ? minutes + ' 分' : minutes + 'm'),
+    remaining && (zh ? remaining + ' 秒' : remaining + 's'),
+  ].filter(Boolean).join(' ')
+  return (zh ? '已完成，用时 ' : 'Completed in ') + parts
+}
+
+function useImportedTurnLabels(sessionId, zh) {
+  React.useEffect(() => {
+    if (typeof sessionId !== 'string' || !sessionId.startsWith('session-cx')) return
+    let current = true
+    let observer
+    const attribute = 'data-dsh-codex-timing'
+    const changed = new Map()
+    function reset(button) {
+      const original = changed.get(button)
+      button.removeAttribute(attribute)
+      if (original === null) button.removeAttribute('aria-label')
+      else button.setAttribute('aria-label', original)
+      changed.delete(button)
+    }
+    void call('getImportedTurnTiming', { sessionId }).then(({ turns }) => {
+      if (!current || !Object.keys(turns).length) return
+      function refresh() {
+        for (const button of changed.keys()) if (!button.isConnected) reset(button)
+        for (const button of document.querySelectorAll('button[data-turn-process]')) {
+          const turn = button.getAttribute('data-turn-process')
+          if (!Object.hasOwn(turns, turn)) {
+            if (changed.has(button)) reset(button)
+            continue
+          }
+          const label = importedTurnLabel(turns[turn], zh)
+          if (!changed.has(button)) changed.set(button, button.getAttribute('aria-label'))
+          if (button.getAttribute(attribute) !== label) button.setAttribute(attribute, label)
+          if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label)
+        }
+      }
+      refresh()
+      observer = new MutationObserver(refresh)
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-turn-process'] })
+    }).catch(() => {})
+    return () => {
+      current = false
+      observer?.disconnect()
+      for (const button of changed.keys()) reset(button)
+    }
+  }, [sessionId, zh])
+}
+
+function attachmentRules(parents, visible, pinned, archived) {
+  const selectors = []
+  for (const [child, parent] of Object.entries(parents || {})) {
+    if (!/^session-cx[\w-]+$/.test(child) || !visible[parent] ||
+        pinned.has(child) || archived.has(child) || archived.has(parent)) continue
+    selectors.push('[data-sidebar-scrollport] [role="tree"] [data-row-key="session:' + child + '"]')
+  }
+  return selectors.length ? selectors.join(',\n') + ' { display: none; }' : ''
+}
+
 function Row({ id, title, isPinned, active, access, zh, disabled, onOpen, onPin }) {
   const pinAction = isPinned ? 'workspace/unpinSession' : 'workspace/pinSession'
   const permission = React.useMemo(() => access.source('session', id, pinAction), [access, id, pinAction])
@@ -161,6 +230,9 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   const [codex, setCodex] = React.useState({ hidden: [], recency: {} })
   const ui = useSnapshot(sessionUi.current)
   const zh = locale().startsWith('zh')
+  const active = ui?.sessionId ?? ui?.binding?.sessionId ??
+    list.ids.find((id) => (list.byId[id]?.retainedBy?.mainView ?? 0) > 0)
+  useImportedTurnLabels(active, zh)
   React.useEffect(() => {
     let mounted = true
     const refresh = () => {
@@ -176,8 +248,6 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   const hidden = new Set(codex.hidden || [])
   const pins = (workspace.pinnedSessionIds || []).filter((id) => list.byId[id] && !archived.has(id))
   const pinned = new Set(pins)
-  const active = ui?.sessionId ?? ui?.binding?.sessionId ??
-    list.ids.find((id) => (list.byId[id]?.retainedBy?.mainView ?? 0) > 0)
   const activity = (id, value) => Math.max(dateValue(value.updatedAt), dateValue(codex.recency?.[id]))
   const recent = Object.entries(list.byId).filter(([id, value]) =>
     !pinned.has(id) && !archived.has(id) && !hidden.has(id) && !value.blank && !value.parentSessionId && value.origin !== 'subagent' &&
@@ -233,7 +303,7 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   }))), footerTarget)
 
   const lists = createPortal(h('div', { className: 'dsh-local-sessions' },
-    h('style', null, style),
+    h('style', null, attachmentRules(codex.attachedParents, list.byId, pinned, archived)),
     h(Section, { id: 'pinned', label: zh ? '置顶会话' : 'Pinned sessions' },
       pins.length ? h('ul', { className: 'dsh-local-sessions-list' }, pins.map((id) => row(id, true))) :
         h('p', { className: 'dsh-local-sessions-empty' }, zh ? '暂无置顶' : 'No pinned sessions')),
@@ -251,6 +321,12 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
 }
 
 function apply(ctx) {
+  ctx.effect(() => {
+    const sheet = document.createElement('style')
+    sheet.textContent = style
+    document.head.append(sheet)
+    return () => sheet.remove()
+  }, 'codex-sidebar: styles')
   const props = {
     sessions: ctx.get('sessions'),
     workspaces: ctx.get('workspaces'),

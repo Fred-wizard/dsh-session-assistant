@@ -7,12 +7,12 @@
 支持 **DeepSeek Harness 0.2.2-rc.5**。在 DSH 左侧打开「插件」→「添加插件」，粘贴：
 
 ```text
-github:Fred-wizard/dsh-codex-sidebar#v1.0.0
+https://github.com/Fred-wizard/dsh-codex-sidebar/releases/download/v1.0.0/dsh-codex-sidebar-1.0.0.tgz
 ```
 
-也可安装默认分支，把地址里的 `#v1.0.0` 去掉。安装后启用插件。侧栏没有出现时，重开 DSH。
+安装后启用插件。侧栏没有出现时，重开 DSH。
 
-命令行等价方式：
+也可以通过 GitHub 标签安装。此方式需要 DSH 安装器能在本机调用 Git：
 
 ```sh
 dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.0"

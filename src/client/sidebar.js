@@ -1,6 +1,9 @@
 function mountCodexSidebar(ctx, call) {
 const { createPortal } = require('react-dom')
-const { IconPinFillRegular, IconPinOutlineRegular, Tooltip } = require('@deepseek-ai/dsh-client-ui-primitives')
+const {
+  IconLoadingOutlineRegular, IconPinFillRegular, IconPinOutlineRegular,
+  IconRefreshOutlineRegular, Toast, Tooltip,
+} = require('@deepseek-ai/dsh-client-ui-primitives')
 const h = React.createElement
 const anchorSelector = '[data-sidebar-scrollport] [data-sidebar-workspace-header]'
 const style = `
@@ -57,22 +60,12 @@ const style = `
     color: var(--dsw-alias-label-primary);
   }
   .dsh-codex-sync[aria-disabled="true"] { cursor: progress; }
-  .dsh-codex-sync-ring {
-    position: relative; width: 12px; height: 12px; box-sizing: border-box;
-    border: 1.4px solid currentColor; border-inline-end-color: transparent; border-radius: 50%;
-    transform: rotate(-25deg);
-  }
-  .dsh-codex-sync:not([aria-busy="true"]) .dsh-codex-sync-ring::after {
-    content: ''; position: absolute; inset-block-start: -2px; inset-inline-end: -2px;
-    width: 4px; height: 4px; border-inline-end: 1.4px solid; border-block-end: 1.4px solid;
-    transform: rotate(10deg);
-  }
-  .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-ring {
+  .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-icon {
     animation: dsh-codex-sync-spin 800ms linear infinite;
   }
-  @keyframes dsh-codex-sync-spin { to { transform: rotate(335deg); } }
+  @keyframes dsh-codex-sync-spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) {
-    .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-ring { animation: none; }
+    .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-icon { animation: none; }
   }
 `
 
@@ -164,6 +157,7 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   const [pending, setPending] = React.useState(null)
   const [syncing, setSyncing] = React.useState(false)
   const [syncFailed, setSyncFailed] = React.useState(false)
+  const [syncToast, setSyncToast] = React.useState(false)
   const [codex, setCodex] = React.useState({ hidden: [], recency: {} })
   const ui = useSnapshot(sessionUi.current)
   const zh = locale().startsWith('zh')
@@ -195,10 +189,12 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
     if (syncing || codex.syncing) return
     setSyncing(true)
     setSyncFailed(false)
+    setSyncToast(false)
     try {
       const next = await call('syncSidebar')
       setCodex(next)
       setSyncFailed(Boolean(next.lastSync?.failures))
+      if (next.lastSync && !next.lastSync.failures) setSyncToast(true)
     } catch {
       setSyncFailed(true)
     } finally { setSyncing(false) }
@@ -232,7 +228,9 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   }, h('button', {
     type: 'button', className: 'dsh-codex-sync', 'aria-label': syncLabel,
     'aria-disabled': busy, 'aria-busy': busy, onClick: () => void syncCodex(),
-  }, h('span', { className: 'dsh-codex-sync-ring', 'aria-hidden': true }))), footerTarget)
+  }, h(busy ? IconLoadingOutlineRegular : IconRefreshOutlineRegular, {
+    size: 14, className: 'dsh-codex-sync-icon', 'aria-hidden': true,
+  }))), footerTarget)
 
   const lists = createPortal(h('div', { className: 'dsh-local-sessions' },
     h('style', null, style),
@@ -245,7 +243,10 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
       recent.length > 5 && h('button', { type: 'button', className: 'dsh-local-sessions-more',
         'aria-expanded': showMore, onClick: () => setShowMore(!showMore) },
       zh ? (showMore ? '收起' : '显示更多') : (showMore ? 'Show fewer' : 'Show more'))),
-    status && h('p', { role: 'status', className: 'dsh-local-sessions-status' }, status)), target)
+    status && h('p', { role: 'status', className: 'dsh-local-sessions-status' }, status),
+    syncToast && h(Toast, {
+      tone: 'success', text: zh ? '同步完成' : 'Sync complete', onDone: () => setSyncToast(false),
+    })), target)
   return h(React.Fragment, null, lists, syncControl)
 }
 

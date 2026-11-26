@@ -1,0 +1,42 @@
+{
+  "name": "dsh-codex-sidebar",
+  "version": "1.0.0",
+  "description": "Codex conversation and memory import, pinned sessions, and recent sessions for DeepSeek Harness",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "repository": "github:Fred-wizard/dsh-codex-sidebar",
+  "homepage": "https://github.com/Fred-wizard/dsh-codex-sidebar",
+  "keywords": ["dsh-plugin", "deepseek-harness", "codex", "sidebar", "migration"],
+  "engines": { "node": ">=22.16.0", "dsh": "0.2.2-rc.5" },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./typert": "./lib/typert.host.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": ["lib/", "cordis.patch.yml", "README.md", "NOTICE.md", "LICENSE"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-primitives",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-ui-session"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-home-paths": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.5"
+  },
+  "scripts": {
+    "build": "node scripts/build-client.js",
+    "test": "node --test test/*.test.mjs"
+  }
+}

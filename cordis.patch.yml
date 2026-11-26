@@ -1,0 +1,9 @@
+- insert:
+    - id: dsh-codex-sidebar
+      name: dsh-codex-sidebar
+      config:
+        codexDir: ''
+        autoImportOnStart: true
+        includeSessions: true
+        includeMemories: true
+        includeArchived: true

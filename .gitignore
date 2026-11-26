@@ -1,0 +1,13 @@
+node_modules/
+*.tgz
+*.log
+.env
+.env.*
+*.sqlite*
+*.zst
+*.zstd
+state.json
+last-sync-result.json
+codex-sidebar/
+codex-sync/
+integration-pilot/

@@ -1,4 +1,4 @@
-# DSH Codex Sidebar
+# DSH 会话助手 · DSH Session Assistant
 
 在 DeepSeek Harness 左侧栏添加「置顶会话」「最近会话」和「同步 Codex」，把本机 Codex 的会话导入为可以打开和继续使用的 DSH 会话，并复制 Markdown 记忆。
 
@@ -7,7 +7,7 @@
 支持 **DeepSeek Harness 0.2.2-rc.5**。在 DSH 左侧打开「插件」→「添加插件」，粘贴：
 
 ```text
-https://github.com/Fred-wizard/dsh-codex-sidebar/releases/download/v1.0.0/dsh-codex-sidebar-1.0.0.tgz
+https://github.com/Fred-wizard/dsh-codex-sidebar/releases/latest/download/dsh-codex-sidebar.tgz
 ```
 
 安装后启用插件。侧栏没有出现时，重开 DSH。
@@ -15,7 +15,7 @@ https://github.com/Fred-wizard/dsh-codex-sidebar/releases/download/v1.0.0/dsh-co
 也可以通过 GitHub 标签安装。此方式需要 DSH 安装器能在本机调用 Git：
 
 ```sh
-dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.0"
+dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.1"
 ```
 
 已有独立的 Codex 会话导入与侧栏插件时，建议先停用旧入口以避免同时显示两个侧栏。已导入会话仍属于原 DSH 工作区。若要沿用旧导入记录以防重复，可将 `outputDir` 指向兼容旧迁移的数据目录。

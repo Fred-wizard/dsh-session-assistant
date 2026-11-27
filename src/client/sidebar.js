@@ -2,7 +2,7 @@ function mountCodexSidebar(ctx, call) {
 const { createPortal } = require('react-dom')
 const {
   IconLoadingOutlineRegular, IconPinFillRegular, IconPinOutlineRegular,
-  IconRefreshOutlineRegular, IconTriangleRightFillRegular, Toast, Tooltip,
+  IconRefreshOutlineRegular, IconTriangleRightFillRegular, StateDot, Toast, Tooltip,
 } = require('@deepseek-ai/dsh-client-ui-primitives')
 const h = React.createElement
 const anchorSelector = '[data-sidebar-scrollport] [data-sidebar-workspace-header]'
@@ -26,7 +26,9 @@ const style = `
   .dsh-local-sessions-heading:hover, .dsh-local-sessions-more:hover {
     background: var(--dsw-alias-interactive-bg-hover, color-mix(in srgb,currentColor 7%,transparent));
   }
-  .dsh-local-sessions-open { flex: 1; min-width: 0; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dsh-local-sessions-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; text-align: start; }
+  .dsh-local-sessions-running { flex: none; display: inline-flex; }
+  .dsh-local-sessions-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .dsh-local-sessions-open, .dsh-local-sessions-pin {
     border: 0; background: transparent; font: inherit; color: var(--dsw-alias-label-primary);
     font-size: 13px; padding: 6px 8px; cursor: pointer; border-radius: 6px;
@@ -209,14 +211,19 @@ function attachmentRules(parents, visible, pinned, archived) {
   return selectors.length ? selectors.join(',\n') + ' { display: none; }' : ''
 }
 
-function Row({ id, title, isPinned, active, access, zh, disabled, onOpen, onPin }) {
+function Row({ id, title, isPinned, active, running, access, zh, disabled, onOpen, onPin }) {
   const pinAction = isPinned ? 'workspace/unpinSession' : 'workspace/pinSession'
   const permission = React.useMemo(() => access.source('session', id, pinAction), [access, id, pinAction])
   const canPin = useSnapshot(permission)
   const pinLabel = zh ? (isPinned ? '取消置顶' : '置顶会话') : (isPinned ? 'Unpin session' : 'Pin session')
+  const runningLabel = zh ? '进行中' : 'Running'
   return h('li', { className: 'dsh-local-sessions-row', 'data-current': active },
     h('button', { className: 'dsh-local-sessions-open', type: 'button', title,
-      'aria-current': active ? 'page' : undefined, onClick: () => onOpen(id) }, title),
+      'aria-current': active ? 'page' : undefined, 'aria-busy': running || undefined,
+      'aria-description': running ? runningLabel : undefined, onClick: () => onOpen(id) },
+    running && h('span', { className: 'dsh-local-sessions-running', title: runningLabel, 'aria-hidden': true },
+      h(StateDot, { state: 'ongoing' })),
+    h('span', { className: 'dsh-local-sessions-title' }, title)),
     canPin && h('button', { type: 'button', className: 'dsh-local-sessions-pin', title: pinLabel,
       'aria-label': pinLabel + ' · ' + title, 'aria-pressed': isPinned, disabled,
       onClick: () => void onPin(id, isPinned) },
@@ -287,9 +294,11 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   }
 
   function row(id, isPinned) {
-    const title = list.byId[id].displayTitle || (zh ? '未命名会话' : 'Untitled session')
+    const session = list.byId[id]
+    const title = session.displayTitle || (zh ? '未命名会话' : 'Untitled session')
     return h(Row, {
-      id, key: id, title, isPinned, active: active === id, access, zh, disabled: pending !== null,
+      id, key: id, title, isPinned, active: active === id, running: session.running,
+      access, zh, disabled: pending !== null,
       onOpen: (sessionId) => navigation.openSession(sessionId), onPin: changePin,
     })
   }

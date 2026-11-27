@@ -227,7 +227,7 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   const [syncing, setSyncing] = React.useState(false)
   const [syncFailed, setSyncFailed] = React.useState(false)
   const [syncToast, setSyncToast] = React.useState(false)
-  const [codex, setCodex] = React.useState({ hidden: [], recency: {} })
+  const [codex, setCodex] = React.useState({ hidden: [] })
   const ui = useSnapshot(sessionUi.current)
   const zh = locale().startsWith('zh')
   const active = ui?.sessionId ?? ui?.binding?.sessionId ??
@@ -248,12 +248,11 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
   const hidden = new Set(codex.hidden || [])
   const pins = (workspace.pinnedSessionIds || []).filter((id) => list.byId[id] && !archived.has(id))
   const pinned = new Set(pins)
-  const activity = (id, value) => Math.max(dateValue(value.updatedAt), dateValue(codex.recency?.[id]))
   const recent = Object.entries(list.byId).filter(([id, value]) =>
     !pinned.has(id) && !archived.has(id) && !hidden.has(id) && !value.blank && !value.parentSessionId && value.origin !== 'subagent' &&
     value.displayTitle && dateValue(value.updatedAt) > 0)
     .sort(([leftId, left], [rightId, right]) =>
-      activity(rightId, right) - activity(leftId, left) || leftId.localeCompare(rightId))
+      dateValue(right.updatedAt) - dateValue(left.updatedAt) || leftId.localeCompare(rightId))
 
   async function syncCodex() {
     if (syncing || codex.syncing) return

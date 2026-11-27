@@ -304,9 +304,8 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
 
   const lists = createPortal(h('div', { className: 'dsh-local-sessions' },
     h('style', null, attachmentRules(codex.attachedParents, list.byId, pinned, archived)),
-    h(Section, { id: 'pinned', label: zh ? '置顶会话' : 'Pinned sessions' },
-      pins.length ? h('ul', { className: 'dsh-local-sessions-list' }, pins.map((id) => row(id, true))) :
-        h('p', { className: 'dsh-local-sessions-empty' }, zh ? '暂无置顶' : 'No pinned sessions')),
+    pins.length > 0 && h(Section, { id: 'pinned', label: zh ? '置顶会话' : 'Pinned sessions' },
+      h('ul', { className: 'dsh-local-sessions-list' }, pins.map((id) => row(id, true)))),
     h(Section, { id: 'recent', label: zh ? '最近会话' : 'Recent sessions' },
       recent.length ? h('ul', { className: 'dsh-local-sessions-list' }, recent.slice(0, showMore ? 20 : 5).map(([id]) => row(id, false))) :
         h('p', { className: 'dsh-local-sessions-empty' }, zh ? '暂无会话' : 'No recent sessions'),

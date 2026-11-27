@@ -1,12 +1,12 @@
 {
   "name": "dsh-codex-sidebar",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "DSH Session Assistant adds pinned and recent sessions, plus local Codex conversation and memory import.",
   "license": "MIT",
   "type": "module",
   "main": "./lib/index.js",
-  "repository": "github:Fred-wizard/dsh-codex-sidebar",
-  "homepage": "https://github.com/Fred-wizard/dsh-codex-sidebar",
+  "repository": "github:Fred-wizard/dsh-session-assistant",
+  "homepage": "https://github.com/Fred-wizard/dsh-session-assistant",
   "keywords": ["dsh-plugin", "deepseek-harness", "codex", "sidebar", "migration"],
   "engines": { "node": ">=22.16.0", "dsh": "0.2.2-rc.5" },
   "exports": {

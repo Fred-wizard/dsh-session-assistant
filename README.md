@@ -7,7 +7,7 @@
 支持 **DeepSeek Harness 0.2.2-rc.5**。在 DSH 左侧打开「插件」→「添加插件」，粘贴：
 
 ```text
-https://github.com/Fred-wizard/dsh-codex-sidebar/releases/latest/download/dsh-codex-sidebar.tgz
+https://github.com/Fred-wizard/dsh-session-assistant/releases/latest/download/dsh-codex-sidebar.tgz
 ```
 
 安装后启用插件。侧栏没有出现时，重开 DSH。
@@ -15,7 +15,7 @@ https://github.com/Fred-wizard/dsh-codex-sidebar/releases/latest/download/dsh-co
 也可以通过 GitHub 标签安装。此方式需要 DSH 安装器能在本机调用 Git：
 
 ```sh
-dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.4"
+dsh plugin --profile desktop add "github:Fred-wizard/dsh-session-assistant#v1.0.5"
 ```
 
 已有独立的 Codex 会话导入与侧栏插件时，建议先停用旧入口以避免同时显示两个侧栏。已导入会话仍属于原 DSH 工作区。若要沿用旧导入记录以防重复，可将 `outputDir` 指向兼容旧迁移的数据目录。
@@ -23,7 +23,7 @@ dsh plugin --profile desktop add "github:Fred-wizard/dsh-codex-sidebar#v1.0.4"
 ## 使用
 
 - 启用或重开 DSH 后自动检查可导入的会话和记忆。悬停在左下角账户栏时，也可点击右侧的刷新图标。手动同步成功后会短暂显示「同步完成」。
-- 点击会话标题打开历史，点击图钉切换 DSH 置顶。最近会话跳过置顶、已归档和 Codex 附属会话。主会话和附属会话都已导入时，工作区默认只列出主会话；仍可搜索附属会话。
+- 点击会话标题打开历史，点击图钉切换 DSH 置顶。没有置顶时，侧栏隐藏「置顶会话」分区。最近会话跳过置顶、已归档和 Codex 附属会话。主会话和附属会话都已导入时，工作区默认只列出主会话；仍可搜索附属会话。
 - 导入轮次在原始 Codex 记录可匹配时显示实际耗时。缺少耗时依据时仅显示完成状态。
 - 在 DSH 中可用 `codex_memory_search` 查找已导入的 Markdown 记忆。
 

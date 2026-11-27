@@ -2,7 +2,7 @@ function mountCodexSidebar(ctx, call) {
 const { createPortal } = require('react-dom')
 const {
   IconLoadingOutlineRegular, IconPinFillRegular, IconPinOutlineRegular,
-  IconRefreshOutlineRegular, Toast, Tooltip,
+  IconRefreshOutlineRegular, IconTriangleRightFillRegular, Toast, Tooltip,
 } = require('@deepseek-ai/dsh-client-ui-primitives')
 const h = React.createElement
 const anchorSelector = '[data-sidebar-scrollport] [data-sidebar-workspace-header]'
@@ -15,7 +15,11 @@ const style = `
     padding: 5px 8px; text-align: start; border-radius: 6px;
   }
   .dsh-local-sessions-heading { width: 100%; display: flex; align-items: center; gap: 6px; }
-  .dsh-local-sessions-heading span:last-child { margin-inline-start: auto; }
+  .dsh-local-sessions-chevron {
+    margin-inline-start: auto; flex: none; color: var(--dsw-alias-label-caption);
+    transition: transform .15s var(--ds-ease-in-out);
+  }
+  .dsh-local-sessions-heading[aria-expanded="true"] .dsh-local-sessions-chevron { transform: rotate(90deg); }
   .dsh-local-sessions-list { list-style: none; margin: 1px 0 0; padding: 0; }
   .dsh-local-sessions-row { display: flex; align-items: center; gap: 2px; border-radius: 8px; min-width: 0; }
   .dsh-local-sessions-row:is(:hover,:focus-within), .dsh-local-sessions-row[data-current="true"],
@@ -65,6 +69,7 @@ const style = `
   }
   @keyframes dsh-codex-sync-spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) {
+    .dsh-local-sessions-chevron { transition: none; }
     .dsh-codex-sync[aria-busy="true"] .dsh-codex-sync-icon { animation: none; }
   }
   button[data-turn-process][data-dsh-codex-timing] > span:first-child { display: none; }
@@ -128,7 +133,8 @@ function Section({ id, label, children }) {
     h('button', {
       className: 'dsh-local-sessions-heading', type: 'button', onClick: toggle,
       'aria-expanded': expanded, 'aria-controls': panelId,
-    }, h('span', null, label), h('span', { 'aria-hidden': true }, expanded ? '⌄' : '›')),
+    }, h('span', null, label),
+    h(IconTriangleRightFillRegular, { className: 'dsh-local-sessions-chevron', 'aria-hidden': true })),
     h('div', { id: panelId, hidden: !expanded }, expanded ? children : null))
 }
 

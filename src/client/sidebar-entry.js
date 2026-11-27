@@ -1,6 +1,6 @@
 const React = require('react')
 
-const inject = ['slots', 'remote', 'timer', 'sessions', 'workspaces', 'uiWorkspace', 'uiSession', 'remoteAccess']
+const inject = ['slots', 'remote', 'timer', 'sessions', 'workspaces', 'uiWorkspace', 'uiSession', 'remoteAccess', 'contextMenus']
 
 function apply(ctx) {
   const mounted = ctx.remote.$mount(SIDEBAR_REMOTE)

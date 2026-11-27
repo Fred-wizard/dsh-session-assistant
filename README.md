@@ -15,7 +15,7 @@ https://github.com/Fred-wizard/dsh-session-assistant/releases/latest/download/ds
 也可以通过 GitHub 标签安装。此方式需要 DSH 安装器能在本机调用 Git：
 
 ```sh
-dsh plugin --profile desktop add "github:Fred-wizard/dsh-session-assistant#v1.0.8"
+dsh plugin --profile desktop add "github:Fred-wizard/dsh-session-assistant#v1.0.9"
 ```
 
 已有独立的 Codex 会话导入与侧栏插件时，建议先停用旧入口以避免同时显示两个侧栏。已导入会话仍属于原 DSH 工作区。若要沿用旧导入记录以防重复，可将 `outputDir` 指向兼容旧迁移的数据目录。
@@ -26,6 +26,7 @@ dsh plugin --profile desktop add "github:Fred-wizard/dsh-session-assistant#v1.0.
 - 点击会话标题打开历史，点击图钉切换 DSH 置顶。没有置顶时，侧栏隐藏「置顶会话」分区。最近会话跳过置顶、已归档和 Codex 附属会话。主会话和附属会话都已导入时，工作区默认只列出主会话；仍可搜索附属会话。
 - 最近会话随 DSH 中的聊天活动自动排序。导入会话沿用导入时记录的原始活动时间，之后在 DSH 里续聊时会排到前面。
 - 正在生成回复的会话会在「最近会话」或「置顶会话」中显示 DSH 原生的「进行中」指示。
+- 在「最近会话」和「置顶会话」里右键点击会话，或聚焦会话后按 Shift+F10，可以打开 DSH 原生菜单。「定位工作区」会展开并滚动到对应工作区。
 - 导入轮次在原始 Codex 记录可匹配时显示实际耗时。缺少耗时依据时仅显示完成状态。
 - 在 DSH 中可用 `codex_memory_search` 查找已导入的 Markdown 记忆。
 

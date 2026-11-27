@@ -1,7 +1,7 @@
 function mountCodexSidebar(ctx, call) {
 const { createPortal } = require('react-dom')
 const {
-  IconLoadingOutlineRegular, IconPinFillRegular, IconPinOutlineRegular,
+  IconFolderOpenRegular, IconLoadingOutlineRegular, IconPinFillRegular, IconPinOutlineRegular,
   IconRefreshOutlineRegular, IconTriangleRightFillRegular, StateDot, Toast, Tooltip,
 } = require('@deepseek-ai/dsh-client-ui-primitives')
 const h = React.createElement
@@ -211,14 +211,72 @@ function attachmentRules(parents, visible, pinned, archived) {
   return selectors.length ? selectors.join(',\n') + ' { display: none; }' : ''
 }
 
-function Row({ id, title, isPinned, active, running, access, zh, disabled, onOpen, onPin }) {
+async function locateWorkspace(sessionId, workspaces, view) {
+  const { items } = workspaces.list.getSnapshot()
+  const workspace = items.find((item) => item.sessionIds.includes(sessionId))
+  const key = workspace?.workspaceId ?? ''
+  const selector = '[data-sidebar-scrollport] [data-sidebar-list-area]'
+  const rowSelector = '[data-row-key="' + CSS.escape('workspace:' + key) + '"]'
+  const normalize = (path) => (/^[a-z]:[/\\]/i.test(path) || path.startsWith('\\\\')
+    ? path.replaceAll('\\', '/') : path).replace(/\/+$/, '')
+  if (workspace) {
+    const path = normalize(workspace.path)
+    for (const item of items) {
+      if (path.startsWith(normalize(item.path) + '/')) view.setGroupExpanded(item.workspaceId, true)
+    }
+  }
+  view.setGroupExpanded(key, true)
+
+  const search = document.querySelector(anchorSelector + ' input[type="text"]')
+  if (search?.value) search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+
+  async function findRow() {
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const row = document.querySelector(selector + ' ' + rowSelector)
+      if (row?.getAttribute('aria-expanded') === 'true') return row
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+  }
+
+  let row = await findRow()
+  // A flat list has no workspace rows. An archived-only filter may hide this one.
+  if (!row && !document.querySelector(selector + ' [data-row-key^="workspace:"]')) {
+    view.setGroupBy('workspace')
+    row = await findRow()
+  }
+  if (!row) {
+    view.setArchivedFilter('default')
+    row = await findRow()
+  }
+  if (!row) throw new Error('Workspace row is unavailable')
+  row.scrollIntoView({ block: 'center' })
+  row.focus({ preventScroll: true })
+}
+
+function Row({ id, title, isPinned, active, running, access, contextMenus, zh, disabled, onOpen, onPin }) {
   const pinAction = isPinned ? 'workspace/unpinSession' : 'workspace/pinSession'
   const permission = React.useMemo(() => access.source('session', id, pinAction), [access, id, pinAction])
   const canPin = useSnapshot(permission)
   const pinLabel = zh ? (isPinned ? '取消置顶' : '置顶会话') : (isPinned ? 'Unpin session' : 'Pin session')
   const runningLabel = zh ? '进行中' : 'Running'
-  return h('li', { className: 'dsh-local-sessions-row', 'data-current': active },
+  function showMenu(event) {
+    if (event.defaultPrevented) return
+    const button = event.currentTarget.querySelector('.dsh-local-sessions-open')
+    const rect = event.clientX || event.clientY ? null : button.getBoundingClientRect()
+    event.preventDefault()
+    event.stopPropagation()
+    button.focus({ preventScroll: true })
+    contextMenus.open({ kind: 'session', value: { sessionId: id, displayTitle: title, sessionAssistant: true } },
+      { x: rect?.left ?? event.clientX, y: rect?.bottom ?? event.clientY })
+  }
+
+  return h('li', { className: 'dsh-local-sessions-row', 'data-current': active, onContextMenu: showMenu },
     h('button', { className: 'dsh-local-sessions-open', type: 'button', title,
+      'aria-haspopup': 'menu',
+      onKeyDown: (event) => {
+        if (!event.repeat && !event.nativeEvent.isComposing && !event.ctrlKey && !event.altKey && !event.metaKey &&
+            (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))) showMenu(event)
+      },
       'aria-current': active ? 'page' : undefined, 'aria-busy': running || undefined,
       'aria-description': running ? runningLabel : undefined, onClick: () => onOpen(id) },
     running && h('span', { className: 'dsh-local-sessions-running', title: runningLabel, 'aria-hidden': true },
@@ -230,7 +288,7 @@ function Row({ id, title, isPinned, active, running, access, zh, disabled, onOpe
     h(isPinned ? IconPinFillRegular : IconPinOutlineRegular, { size: 14, 'aria-hidden': true })))
 }
 
-function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }) {
+function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access, contextMenus }) {
   const { target, footerTarget } = useAnchors()
   const list = useSnapshot(sessions.list)
   const workspace = useSnapshot(workspaces.list)
@@ -298,7 +356,7 @@ function Sidebar({ sessions, workspaces, navigation, locale, sessionUi, access }
     const title = session.displayTitle || (zh ? '未命名会话' : 'Untitled session')
     return h(Row, {
       id, key: id, title, isPinned, active: active === id, running: session.running,
-      access, zh, disabled: pending !== null,
+      access, contextMenus, zh, disabled: pending !== null,
       onOpen: (sessionId) => navigation.openSession(sessionId), onPin: changePin,
     })
   }
@@ -346,8 +404,22 @@ function apply(ctx) {
     navigation: ctx.get('uiWorkspace'),
     sessionUi: ctx.get('uiSession'),
     access: ctx.get('remoteAccess'),
+    contextMenus: ctx.get('contextMenus'),
     locale: () => document.documentElement.lang || navigator.language,
   }
+  const icon = 'dsh-codex-sidebar.locateWorkspace'
+  ctx.slots.inject('contextMenu.icon', () => ctx.slots.register(
+    { name: 'contextMenu.icon', key: icon }, () => h(IconFolderOpenRegular, { size: 14 }),
+  ))
+  ctx.effect(() => props.contextMenus.register({
+    id: 'session.dsh-codex-sidebar.locateWorkspace', target: 'session', order: 150,
+    resolve: ({ sessionId, sessionAssistant }) => sessionAssistant ? [{
+      id: 'dsh-codex-sidebar.locateWorkspace',
+      label: props.locale().startsWith('zh') ? '定位工作区' : 'Locate workspace',
+      icon: { key: icon },
+      run: () => locateWorkspace(sessionId, props.workspaces, props.navigation.view),
+    }] : [],
+  }), 'codex-sidebar: locate workspace menu')
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register(
     { name: 'sidebar.footer.action', id: 'dsh-codex-sidebar' },
     () => h(Sidebar, props),
